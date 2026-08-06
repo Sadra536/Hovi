@@ -1,4 +1,4 @@
-ame: Check Sorkhroud Site (10 Users)
+ name: Check Sorkhroud Site (10 Users)
 
 on:
   workflow_dispatch:
