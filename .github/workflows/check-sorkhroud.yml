@@ -1,4 +1,4 @@
-name: Check Sorkhroud Site (2 Users)
+ame: Check Sorkhroud Site (10 Users)
 
 on:
   workflow_dispatch:
@@ -6,24 +6,31 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-strategy:
-  matrix:
-    user_id: [1,2,3,4,5,6,7,8,9,10]
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    strategy:
+      fail-fast: false
+      matrix:
+        user_id: [1,2,3,4,5,6,7,8,9,10]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          pip install requests
 
       - name: Check site
         env:
           SITE_URL: "https://sorkhroud.ir"
           USER_LABEL: user-${{ matrix.user_id }}
-        run: python check_site.py
+        run: |
+          python check_site.py
 
       - name: Upload result
         uses: actions/upload-artifact@v4
@@ -32,37 +39,80 @@ strategy:
           path: result_user-${{ matrix.user_id }}.json
           retention-days: 3
 
+
   report:
     needs: check
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: actions/download-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download results
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
+
       - name: Build summary
         run: |
           python - <<'EOF'
-          import json, glob
+          import json
+          import glob
+
           files = glob.glob("artifacts/**/result_*.json", recursive=True)
-          lines = ["# نتیجه بررسی sorkhroud.ir\n"]
-          total_req = total_ok = total_fail = 0
-          for path in files:
-              d = json.load(open(path, encoding="utf-8"))
-              total_req += d["total_requests"]
-              total_ok += d["successful"]
-              total_fail += d["failed"]
-              lines.append(f"## {d['user_label']}")
-              lines.append(f"- درخواست‌ها: {d['total_requests']} | موفق: {d['successful']} | ناموفق: {d['failed']}")
-              lines.append(f"- میانگین زمان پاسخ: {d.get('avg_response_ms')}ms\n")
-          lines.insert(1, f"**جمع کل:** {total_req} درخواست | {total_ok} موفق | {total_fail} ناموفق\n")
-          summary = "\n".join(lines)
-          print(summary)
-          open("summary.md", "w", encoding="utf-8").write(summary)
+
+          total_req = 0
+          total_ok = 0
+          total_fail = 0
+
+          lines = [
+              "# نتیجه بررسی sorkhroud.ir\n"
+          ]
+
+          for file in files:
+              with open(file, encoding="utf-8") as f:
+                  data = json.load(f)
+
+              total_req += data["total_requests"]
+              total_ok += data["successful"]
+              total_fail += data["failed"]
+
+              lines.append(
+                  f"## {data['user_label']}"
+              )
+
+              lines.append(
+                  f"- درخواست‌ها: {data['total_requests']} | موفق: {data['successful']} | ناموفق: {data['failed']}"
+              )
+
+              lines.append(
+                  f"- میانگین زمان پاسخ: {data.get('avg_response_ms')}ms\n"
+              )
+
+
+          lines.insert(
+              1,
+              f"**جمع کل:** {total_req} درخواست | {total_ok} موفق | {total_fail} ناموفق\n"
+          )
+
+
+          report = "\n".join(lines)
+
+          print(report)
+
+          with open("summary.md","w",encoding="utf-8") as f:
+              f.write(report)
+
           EOF
-      - name: Add to job summary
+
+
+      - name: Add summary
         run: cat summary.md >> "$GITHUB_STEP_SUMMARY"
-# update
+
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-report
+          path: summary.md
+
