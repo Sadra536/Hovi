@@ -1,0 +1,70 @@
+name: Simulate 50 Users (Advanced)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 20
+      fail-fast: false
+      matrix:
+        user_id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                   11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                   31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+                   41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Simulate user session
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          USER_LABEL: user-${{ matrix.user_id }}
+          # PERSONA رو خالی بذار تا رندوم انتخاب بشه، یا یکی از این‌ها رو بذار:
+          # fast / slow / chatty / quiet
+        run: python simulate_user_advanced.py
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-user-${{ matrix.user_id }}
+          path: result_user-${{ matrix.user_id }}.json
+          retention-days: 3
+
+  report:
+    needs: simulate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Build report
+        run: python aggregate_report.py
+
+      - name: Add to job summary
+        run: cat summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload final report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-report
+          path: summary.md
+          retention-days: 14
