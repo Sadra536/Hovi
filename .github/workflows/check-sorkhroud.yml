@@ -1,0 +1,67 @@
+name: Check Sorkhroud Site (2 Users)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        user_id: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Check site
+        env:
+          SITE_URL: "https://sorkhroud.ir"
+          USER_LABEL: user-${{ matrix.user_id }}
+        run: python check_site.py
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-user-${{ matrix.user_id }}
+          path: result_user-${{ matrix.user_id }}.json
+          retention-days: 3
+
+  report:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Build summary
+        run: |
+          python - <<'EOF'
+          import json, glob
+          files = glob.glob("artifacts/**/result_*.json", recursive=True)
+          lines = ["# نتیجه بررسی sorkhroud.ir\n"]
+          total_req = total_ok = total_fail = 0
+          for path in files:
+              d = json.load(open(path, encoding="utf-8"))
+              total_req += d["total_requests"]
+              total_ok += d["successful"]
+              total_fail += d["failed"]
+              lines.append(f"## {d['user_label']}")
+              lines.append(f"- درخواست‌ها: {d['total_requests']} | موفق: {d['successful']} | ناموفق: {d['failed']}")
+              lines.append(f"- میانگین زمان پاسخ: {d.get('avg_response_ms')}ms\n")
+          lines.insert(1, f"**جمع کل:** {total_req} درخواست | {total_ok} موفق | {total_fail} ناموفق\n")
+          summary = "\n".join(lines)
+          print(summary)
+          open("summary.md", "w", encoding="utf-8").write(summary)
+          EOF
+      - name: Add to job summary
+        run: cat summary.md >> "$GITHUB_STEP_SUMMARY"
