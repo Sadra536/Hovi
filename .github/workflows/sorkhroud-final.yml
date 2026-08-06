@@ -1,12 +1,62 @@
-name: Sorkhroud Final Test
+name: Sorkhroud Final Test (20 Users)
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  check:
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        user_id: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+
     steps:
-      - name: Check
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Check website
+        env:
+          USER_ID: ${{ matrix.user_id }}
         run: |
-          echo "Workflow OK"
+          python <<'PY'
+          import requests
+          import time
+          import os
+
+          user = os.environ["USER_ID"]
+          url = "https://sorkhroud.ir"
+
+          start = time.time()
+
+          try:
+              r = requests.get(
+                  url,
+                  timeout=15,
+                  headers={
+                      "User-Agent": f"Monitor-User-{user}"
+                  }
+              )
+
+              ms = round((time.time()-start)*1000,2)
+
+              print("User:", user)
+              print("Status:", r.status_code)
+              print("Response:", ms, "ms")
+              print("Size:", len(r.content), "bytes")
+
+              if r.status_code < 400:
+                  print("✅ OK")
+              else:
+                  print("❌ HTTP ERROR")
+
+          except Exception as e:
+              print("❌ ERROR:", e)
+
+          PY
