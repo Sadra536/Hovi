@@ -38,10 +38,10 @@ jobs:
           user = os.environ["USER_LABEL"]
 
           pages = [
-              "https://sorkhroud.ir/",
-              "https://sorkhroud.ir/news",
-              "https://sorkhroud.ir/contact",
-              "https://sorkhroud.ir/services"
+              "http://www.jerusalem.muni.il",
+              "http://www.jerusalem.muni.il",
+              "http://www.jerusalem.muni.il",
+              "http://www.jerusalem.muni.il"
           ]
 
           result = {
