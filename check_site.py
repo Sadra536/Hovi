@@ -74,7 +74,7 @@ def main():
     human_delay(0.5, 2)
 
     # هر کاربر چند بار صفحه رو باز می‌کنه (شبیه رفرش/گشتن)
-    visits = random.randint(10000,20000 )
+    visits = random.randint(500,800 )
     for _ in range(visits):
         page = random.choice(PAGES)
         check_page(page)
