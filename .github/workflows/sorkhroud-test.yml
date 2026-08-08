@@ -1,4 +1,4 @@
-name: Check Sorkhroud Site (10 Users)
+ame: Check Sorkhroud Site (10 Users)
 
 on:
   workflow_dispatch:
@@ -230,3 +230,8 @@ jobs:
 
       - name: Add summary
         run: cat summary.md >> $GITHUB_STEP_SUMMARY
+name: Sorkhroud Test
+
+on:
+  workflow_dispatch:
+
