@@ -16,7 +16,7 @@ except ImportError:
     print("پکیج requests نصب نیست. با: pip install requests")
     sys.exit(1)
 
-SITE_URL = os.environ.get("SITE_URL", "http://www.jerusalem.muni.il").rstrip("/")
+SITE_URL = os.environ.get("SITE_URL", "https://farahpahlavi.org").rstrip("/")
 USER_LABEL = os.environ.get("USER_LABEL", "user")
 
 # صفحاتی که چک می‌شن - اگه صفحه‌ی دیگه‌ای مهمه (اخبار، تماس با ما و ...) اضافه کن
