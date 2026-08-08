@@ -31,7 +31,7 @@ jobs:
           import os
 
           user = os.environ["USER_ID"]
-          url = "http://www.jerusalem.muni.il"
+          url = "https://farahpahlavi.org"
 
           start = time.time()
 
