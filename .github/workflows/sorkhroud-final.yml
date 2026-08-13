@@ -27,7 +27,7 @@ jobs:
 
       - name: Run health check
         env:
-          SITE_URL: "https://www.aryamehr.online"
+          SITE_URL: "https://javidnam.velocodes.s3v.ir/"
           USER_LABEL: "user-${{ matrix.user_id }}"
           REQUESTS_PER_USER: "10"
         run: python check_site.py
